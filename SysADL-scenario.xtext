@@ -4,7 +4,7 @@
 4. The AGV System sends a Departed message to the Supervisory System.
 5. The arrival sensor notifies the AGV System that it has arrived at factory station (#).
 6. The AGV System determines that this station is the destination station and commands the motor to stop moving.
-7: If the vehicle arrives at a different station from the destination station, the vehicle passes the station without stopping and sends a “Passed factory station (#) without stopping” message to the Supervisory System.
+7: If the vehicle arrives at a different station from the destination station, the vehicle passes the station without stopping and sends a "Passed factory station (#) without stopping" message to the Supervisory System.
 8. The motor notifies the AGV System that the vehicle has stopped moving.
 9. The AGV System commands the robot arm to load the part.
 10. The arm notifies the AGV System that the part has been loaded.
