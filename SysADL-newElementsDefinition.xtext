@@ -1,0 +1,154 @@
+grammar org.sysadl.SysADL with org.eclipse.xtext.common.Terminals
+
+import "http://www.eclipse.org/emf/2002/Ecore" as ecore
+import "http://www.sysadl.org/sysadl/1.0" as sysadl
+
+// Importa as definições existentes
+import "platform:/resource/org.sysadl.model/model/sysadl.ecore" as model
+
+// Novo bloco para integração da DSL de ambientes e cenários
+// ---------------------------------------------------------
+
+EnvironmentModel:
+    environment=Environment;
+
+Environment:
+    'environment' name=ID '{'
+        ('ambient' ambient=Ambient)?
+        'components' '{' components+=EnvComponent* '}'
+    '}';
+
+Ambient:
+    'ambient' name=ID 'type' type=ID;
+
+EnvComponent:
+    'component' name=ID '{'
+        'elements' '{' elements+=Element* '}'
+        ('junctions' '{' junctions+=Junction* '}')?
+    '}';
+
+Element:
+    Physical | Computational;
+
+Physical:
+    'physical' name=ID '{'
+        ('geometry' geometry=Geometry)?
+        ('position' position=Position)?
+        ('trajectory' trajectory=Trajectory)?
+        ('sensors' '{' sensors+=Sensor* '}')?
+    '}';
+
+Computational:
+    Hardware | Software;
+
+Hardware:
+    'hardware' name=ID 'type' type=ID;
+
+Software:
+    Clock;
+
+Clock returns Software:
+    'software' name=ID 'type' 'clock' '{'
+        'interval' interval=FLOAT
+    '}';
+
+Geometry:
+    Box | Cylinder | Sphere | Plane | Image;
+
+Box:
+    'box' width=FLOAT height=FLOAT depth=FLOAT;
+
+Cylinder:
+    'cylinder' radius=FLOAT height=FLOAT;
+
+Sphere:
+    'sphere' radius=FLOAT;
+
+Plane:
+    'plane' width=FLOAT height=FLOAT;
+
+Image:
+    'image' uri=STRING;
+
+Position:
+    'position' x=FLOAT y=FLOAT z=FLOAT roll=FLOAT pitch=FLOAT yaw=FLOAT;
+
+Trajectory:
+    'trajectory' '[' positions+=Position (',' positions+=Position)* ']';
+
+Sensor:
+    ProximitySensor;
+
+ProximitySensor returns Sensor:
+    'sensor' name=ID 'type' 'proximity' '{'
+        'range' range=FLOAT
+    '}';
+
+Junction:
+    'junction' name=ID 'source' source=[Element] 'target' target=[Element] 'type' type=ID;
+
+// Componentes de Cenário
+ScenarioModel:
+    scenarios+=Scenario*;
+
+Scenario:
+    'scenario' name=ID '{'
+        'environment' environment=[Environment]
+        'actors' '{' actors+=Actor+ '}'
+        'timeline' timeline=Timeline
+    '}';
+
+Actor:
+    activity=[model::Activity] | envComponent=[EnvComponent];
+
+Timeline:
+    'timeline' '{'
+        instructions+=Instruction*
+    '}';
+
+Instruction:
+    Event | EventAction | Condition | Loop | Parallel | Assignment | Break;
+
+Event:
+    'event' name=ID ('triggeredBy' trigger=Trigger)? '{'
+        instructions+=Instruction*
+    '}';
+
+Trigger:
+    'trigger' expression=STRING;
+
+EventAction:
+    ('set' result=ID '=')? 'action' name=ID 'by' actor=[Actor] 'do' operation=ID ('(' parameters+=Parameter (',' parameters+=Parameter)* ')')?;
+
+Parameter:
+    name=ID '=' value=ParameterValue;
+
+ParameterValue:
+    SimpleValue | CompositeValue;
+
+SimpleValue:
+    value=STRING;
+
+CompositeValue:
+    '{' parameters+=Parameter (',' parameters+=Parameter)* '}';
+
+Condition:
+    'condition' expression=STRING '{' instructions+=Instruction* '}';
+
+Loop:
+    'loop' expression=STRING '{' instructions+=Instruction* '}';
+
+Parallel:
+    'parallel' '{' instructions+=Instruction* '}';
+
+Assignment:
+    'set' variable=ID '=' value=STRING;
+
+Break:
+    'break';
+
+// Instâncias do modelo
+
+Model:
+    environmentModel=EnvironmentModel
+    scenarioModel=ScenarioModel;

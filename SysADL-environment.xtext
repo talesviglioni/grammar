@@ -1,0 +1,91 @@
+environment industrialFloor {
+  components {
+    component Station1 {
+      elements {
+        physical Base1 {
+          geometry cylinder 0.5 1.0
+          position 3.0 0.0 0.0 0.0 0.0 0.0
+        }
+        physical Sensor1 {
+          sensors {
+            sensor proximity1 type proximity {
+              range 2.0
+            }
+          }
+        }
+      }
+      junctions {
+        junction j1 source Sensor1 target Base1 type Fixed
+      }
+    }
+    component Station2 {
+      elements {
+        physical Base2 {
+          geometry cylinder 0.5 1.0
+          position 6.0 0.0 0.0 0.0 0.0 0.0
+        }
+        physical Sensor2 {
+          sensors {
+            sensor proximity2 type proximity {
+              range 2.0
+            }
+          }
+        }
+      }
+      junctions {
+        junction j2 source Sensor2 target Base2 type Fixed
+      }
+    }
+    component Station3 {
+      elements {
+        physical Base3 {
+          geometry cylinder 0.5 1.0
+          position 9.0 0.0 0.0 0.0 0.0 0.0
+        }
+        physical Sensor3 {
+          sensors {
+            sensor proximity3 type proximity {
+              range 2.0
+            }
+          }
+        }
+      }
+      junctions {
+        junction j3 source Sensor3 target Base3 type Fixed
+      }
+    }
+    component Station4 {
+      elements {
+        physical Base4 {
+          geometry cylinder 0.5 1.0
+          position 12.0 0.0 0.0 0.0 0.0 0.0
+        }
+        physical Sensor4 {
+          sensors {
+            sensor proximity4 type proximity {
+              range 2.0
+            }
+          }
+        }
+      }
+      junctions {
+        junction j4 source Sensor4 target Base4 type Fixed
+      }
+    }
+    component Box {
+      elements {
+        physical Box {
+          geometry box 0.3 0.3 0.3
+          position 12.0 0.0 0.0 0.0 0.0 0.0
+        }
+      }
+    }
+    component timerSystem {
+      elements {
+        software clock1 type clock {
+          interval 30.0
+        }
+      }
+    }
+  }
+}

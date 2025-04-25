@@ -1,0 +1,111 @@
+1. The Supervisory System sends a message to the AGV system requesting it to move to a factory station and load a part.
+2. The AGV System commands the motor to start moving.
+3. The motor notifies the AGV System that the vehicle has started moving.
+4. The AGV System sends a Departed message to the Supervisory System.
+5. The arrival sensor notifies the AGV System that it has arrived at factory station (#).
+6. The AGV System determines that this station is the destination station and commands the motor to stop moving.
+7: If the vehicle arrives at a different station from the destination station, the vehicle passes the station without stopping and sends a “Passed factory station (#) without stopping” message to the Supervisory System.
+8. The motor notifies the AGV System that the vehicle has stopped moving.
+9. The AGV System commands the robot arm to load the part.
+10. The arm notifies the AGV System that the part has been loaded.
+11. The AGV System sends an Arrived message to the Supervisory System.
+12. Clock notifies AGV System that the timer has expired every 30 seconds
+13. AGV System reads the status information about AGV location and idle/busy status.
+14. AGV System sends the AGV status information to the Display System.
+
+scenario LoadBoxAtStation4 {
+  environment industrialFloor
+  actors {
+    agvStartMov = activity StartMovingAC
+    agvMotorNot = activity NotifierMotorAC
+    agvCheckSta = activity CheckStationAC
+    agvArmCrl = activity ControlArmAC
+    agvArmNot = activity NotifierArmAC
+    agvVehicTimer = activity VehicleTimerAC
+    sensor1 = envComponent station1
+    sensor2 = envComponent station2
+    sensor3 = envComponent station3
+    sensor4 = envComponent station4  
+  }
+  timeline {
+
+    set currentStation = 0
+    set destinationStation = 4
+    set commandToArm = "Idle"
+    set working = true
+
+    event initialize {
+      condition "sensor1.proximity1 == true" {
+	set currentStation = 1
+      } 
+      condition "sensor2.proximity2 == true" {
+	set currentStation = 2
+      }
+      condition "sensor3.proximity3 == true" {
+	set currentStation = 3
+      }
+      condition "sensor4.proximity4 == true" {
+	set currentStation = 4
+      }
+    }
+    
+    parallel {
+      event checkStatus {
+        loop "true" {
+          condition working = false {
+             break
+          }
+	  set currentStation = 0
+          condition "sensor1.proximity1 == true" {
+  	    set currentStation = 1
+          } 
+          condition "sensor2.proximity2 == true" {
+  	    set currentStation = 2
+          }
+          condition "sensor3.proximity3 == true" {
+	    set currentStation = 3
+          }
+          condition "sensor4.proximity4 == true" {
+	    set currentStation = 4
+          }
+        }
+      }
+
+      event moveToStation4 {
+        set totalStations = "4"
+    
+        set vehicleData={destination=destinationStation, command="start"}
+        action requestMove by agvStartMov do SendDestinationAN(vehicleData)
+        action startMotor by agvStartMov do SendStartMotorAN(vehicleData)
+        action notifyStarted by agvMotorNot do NotifyAGVFromMotorAN(statusMotor="Started")
+        action notifySupervisor by agvMotorNot do NotifySupervisoryFromMotorAN(statusMotor="Started")
+    
+        loop "totalStations <= 4" {
+	
+	  set compareData={statusMotor="started", destination="4", location="currentStation"}	
+          set isDestinationStation = action compareStation by agvCheckSta do CompareStationsAN(compareData)
+	  
+	  condition "isDestinationStation != true" {
+	    action notififyPassed by agvCheckSta do PassedMotorAN(comparisonResult=isDestinationStation)	
+          }
+          condition "isDestinationStation == true" {
+            action stopMotor by agvCheckSta do StopMotorAN(comparisonResult=isDestinationStation)
+            action notifyStopped by agvMotorNot do NotifyAGVFromMotorAN(statusMotor="Stopped")
+            action loadPart by agvArmCrl do ControlArmAN(statusMotor="Stopped", cmd="Load")
+            action notifyLoaded by arm do NotifyLoaded()
+	    action notifySS by agvArmNot do NotifierArmAN(statusArm="Loaded")
+	    set commandToArm = "Load"
+          }
+        }
+        set working = false
+      }
+
+      event periodicUpdate triggeredBy on clock1 {
+        action updateStatus by agvVehicTimer do VehicleTimerAN(destination=destinationStation, location=currentStation, cmd=commandToArm)
+        set clock1 = false
+      }
+    }
+  }
+}
+
+OBS: cada 30 segundos o elemento clock1 muda seu status para verdadeiro
