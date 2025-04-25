@@ -107,5 +107,3 @@ scenario LoadBoxAtStation4 {
     }
   }
 }
-
-OBS: cada 30 segundos o elemento clock1 muda seu status para verdadeiro
